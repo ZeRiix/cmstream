@@ -15,6 +15,7 @@ define(
         'MAIL_PORT' => {MAIL_PORT},
         'MAIL_HOST' => '{MAIL_HOST}',
         'MAIL_FROM' => '{MAIL_FROM}',
+        'MAIL_PASSWORD' => '{MAIL_PASSWORD}',
         'HOST' => '{HOST}',
     ]
 );

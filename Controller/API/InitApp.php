@@ -94,24 +94,36 @@ class tryEmail extends Controller
         return [
             ["type/string", $request->getBody()["MAIL_HOST"], "host"],
             ["type/int", $request->getBody()["MAIL_PORT"], "port"],
-            ["type/string", $request->getBody()["MAIL_FROM"], "mail"]
+            ["type/string", $request->getBody()["MAIL_FROM"], "mail"],
+            ["type/sting", $request->getBody()["MAIL_PASSWORD"], "password"]
         ];
     }
 
     public function handler(Request $request, Response $response): void
     {
-        $mail = new PHPMailer(true);
-        $mail->SMTPDebug = 0;
-        $mail->isSMTP();
-        $mail->Host = $this->floor->pickup("host");
-        $mail->Port = $this->floor->pickup("port");
+        $host = $this->floor->pickup("host");
+        $port = $this->floor->pickup("port");
+        $mail = $this->floor->pickup("mail");
+        $password = $this->floor->pickup("password");
 
-        $mail->setFrom($this->floor->pickup("mail"), "test");
-        $mail->addAddress($this->floor->pickup("mail"));
-        $mail->isHTML(true);
-        $mail->Subject = "test";
-        $mail->Body = "test";
-        $mail->send();
+        $mailClient = new PHPMailer(true);
+        $mailClient->SMTPDebug = 0;
+        $mailClient->Host = $host;
+        $mailClient->Port = $port;
+        $mailClient->isSMTP();
+        $mailClient->SMTPSecure = 'tls';
+        $mailClient->SMTPAuth = true;
+
+        $mailClient->setFrom($mail, "test");
+        $mailClient->Username = !empty($password) ? $mail : '';
+        $mailClient->Password = !empty($password) ? $password : '';
+
+        $mailClient->addAddress($mail);
+        $mailClient->isHTML(true);
+        $mailClient->Subject = "test";
+        $mailClient->Body = "test";
+
+        $mailClient->send();
 
         $response->code(204)->send();
     }
@@ -159,6 +171,7 @@ class tryFirstAccount extends Controller
     "MAIL_HOST" : "maildev",
     "MAIL_PORT" : 1025,
     "MAIL_FROM" : "no-reply-cmstream@mail.com",
+    "MAIL_PASSWORD": "",
 
     "firstname": "Mathieu",
     "lastname": "Campani",

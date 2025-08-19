@@ -10,7 +10,8 @@ use Entity\User;
 use Entity\Waiting_validate;
 use Services\Access\AccessDashboard;
 use Services\Access\AccessUserEditor;
-use Services\Back\MailService;
+use Services\Back\Mail\MailService;
+use Services\Back\Mail\Template\RegisterTemplate;
 use Services\MustBeConnected;
 use Services\token\AccessToken;
 use Services\token\EmailToken;
@@ -41,27 +42,18 @@ class register extends Controller
 {
     public function checkers(Request $request): array
     {
-        $user = $request->getBody();
+        $body = $request->getBody();
         return [
-            ["user/firstname", $user["firstname"], "firstname"],
-            ["user/lastname", $user["lastname"], "lastname"],
-            ["user/email", $user["email"], "email"],
+            ["user/firstname", $body["firstname"], "firstname"],
+            ["user/lastname", $body["lastname"], "lastname"],
+            ["user/email", $body["email"], "email"],
             ["user/mailMustBeFree", fn() => $this->floor->pickup("email")],
-            ["user/username", $user["username"], "username"],
+            ["user/username", $body["username"], "username"],
             ["user/usernameMustBeFree", fn() => $this->floor->pickup("username")],
-            ["user/password", $user["password"], "password"]
+            ["user/password", $body["password"], "password"]
         ];
     }
 
-    //TODO fonction check permettant de vérifier si l'email est joignable
-    public function check($email)
-    {
-        $result = FALSE;
-    }
-
-    /**
-     * @throws \Exception
-     */
     public function handler(Request $request, Response $response): void
     {
         $waitingUser = Waiting_validate::insertOne([
@@ -73,17 +65,19 @@ class register extends Controller
         ]);
 
         $token = EmailToken::generate(["id" => $waitingUser->getId()], true);
+        $validateUrl = CONFIG["HOST"] . "/validate?token=" . $token;
+
+        $fullName = $this->floor->pickup("firstname") . " " . $this->floor->pickup("lastname");
+
+        $registerMailContent = RegisterTemplate::create(
+            $fullName,
+            $validateUrl,
+        )->render();
 
         MailService::send(
             $this->floor->pickup("email"),
             "Validation de votre compte",
-
-            "Bonjour " . $this->floor->pickup("firstname") . " " . $this->floor->pickup("lastname") . ",<br><br>" .
-            "Merci de vous &ecirctre inscrit sur notre site.<br>" .
-            "Pour valider votre compte, veuillez cliquer sur le lien suivant :<br><br>" .
-            "<a href='" . CONFIG["HOST"] . "/validate?token=" . $token . "'>Valider mon compte</a><br><br>" .
-            "Cordialement,<br>" .
-            "L'&eacutequipe de notre site."
+            $registerMailContent,
         );
 
         $response->code(200)->info("user.registered")->send();

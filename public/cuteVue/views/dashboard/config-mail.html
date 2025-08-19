@@ -29,6 +29,13 @@
             placeholder="Host du serveur"
             :rules="this.hostRule" 
             />
+
+            <text-input 
+            type="password" 
+            cv-model="editApiKeyMail" 
+            placeholder="clé api service mail"
+            :rules="this.apiKeyRule" 
+            />
             
             <btn 
             type="submit"
@@ -52,6 +59,7 @@
             editMailFrom: "",
             editPort: 0,
             editMailHost: "",
+            editApiKeyMail: "",
         },
         static: {
             fromRule: [
@@ -65,6 +73,9 @@
             hostRule: [
                 v => !!v || "Le champ est requis",
             ],
+            apiKeyRule: [
+                v => !v || v.length >= 3 || "La clé api doit faire au moins 3 caractères"
+            ],
         },
         methods: {
             getConfigMail() {
@@ -73,6 +84,7 @@
                     this.editMailFrom = data.MAIL_FROM;
                     this.editPort = data.MAIL_PORT;
                     this.editMailHost = data.MAIL_HOST;
+                    this.editApiKeyMail = data.MAIL_PASSWORD;
                 })
                 .e(error => {
                     this.pushToast("error", "Erreur lors de la récupération de la configuration du serveur mail");
@@ -83,8 +95,9 @@
                     "/config/mail", 
                     {
                         MAIL_FROM: this.editMailFrom,
-                        MAIL_PORT: this.editPort,
+                        MAIL_PORT: Number(this.editPort),
                         MAIL_HOST: this.editMailHost,
+                        MAIL_PASSWORD: this.editApiKeyMail,
                     },
                     {loader: true}
                 )
