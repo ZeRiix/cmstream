@@ -2,10 +2,8 @@
 
 namespace Controller\API\ConfigController;
 
-use Core\Controller;
 use Core\Request;
 use Core\Response;
-use Core\QueryBuilder;
 use Core\File;
 use Core\UploadFile;
 
@@ -107,6 +105,7 @@ class updateConfigMail extends AccessConfigEditor
             ["type/string", $request->getBody()["MAIL_HOST"]],
             ["type/string", $request->getBody()["MAIL_FROM"]],
             ["user/email", $request->getBody()["MAIL_FROM"]],
+            ["type/string", $request->getBody()["MAIL_PASSWORD"]],
         ];
     }
 
@@ -118,7 +117,7 @@ class updateConfigMail extends AccessConfigEditor
 
             $config = $file->read();
 
-            foreach (['MAIL_PORT', 'MAIL_HOST', 'MAIL_FROM'] as $key) {
+            foreach (['MAIL_PORT', 'MAIL_HOST', 'MAIL_FROM', 'MAIL_PASSWORD'] as $key) {
                 if (gettype($body[$key]) === 'string') {
                     $config = preg_replace("/'{$key}'(?:^$|[ ]*)=>(?:^$|[ ]*)'([^']*)'(?:^$|[ ]*),/", "'{$key}' => '{$body[$key]}',", $config);
                 } else {
@@ -170,7 +169,7 @@ class getConfigMail extends AccessConfigEditor
 {
     public function handler(Request $request, Response $response): void
     {
-        foreach (['MAIL_PORT', 'MAIL_HOST', 'MAIL_FROM'] as $key) {
+        foreach (['MAIL_PORT', 'MAIL_HOST', 'MAIL_FROM', 'MAIL_PASSWORD'] as $key) {
             $data[$key] = CONFIG[$key];
         }
         $response->code(200)->send($data);
